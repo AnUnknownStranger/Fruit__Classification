@@ -19,7 +19,7 @@ def load_images_from_folder(folder_path):
             try:
                 img = Image.open(img_file).convert("RGB")  
                 img = img.resize((224,224))
-                img_array = np.array(img)         
+                img_array = np.array(img, dtype=np.float32)/255.0    
                 images.append(img_array)
                 labels.append(class_name)
             except Exception as e:
