@@ -12,7 +12,7 @@ import cv2
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, f1_score, classification_report
 
 BASE_DIR = Path("Fruits Classification")
 
@@ -82,9 +82,21 @@ def extract_hog_features(image):
     
     return features
 
-def test_method(name, extract_func, images_train, images_test, y_train, y_test):
-    """Test a single method"""
+def report(name, X, y, model, le):
+    """Detailed reporting function for each dataset split"""
+    y_pred = model.predict(X)
+    acc = accuracy_score(y, y_pred)
+    f1 = f1_score(y, y_pred, average="macro")
+    print(f"[{name}] accuracy={acc:.4f} macroF1={f1:.4f}")
+    if name == "test":
+        print(classification_report(y, y_pred, target_names=le.classes_))
+    return acc, f1
+
+def test_method(name, extract_func, images_train, images_test, y_train, y_test, le):
+    """Test a single method with detailed reporting"""
+    print(f"\n{'='*60}")
     print(f"Testing {name}...")
+    print(f"{'='*60}")
     
     # Extract features
     X_train = np.array([extract_func(img) for img in images_train])
@@ -94,15 +106,18 @@ def test_method(name, extract_func, images_train, images_test, y_train, y_test):
     clf = RandomForestClassifier(n_estimators=100, random_state=42)
     clf.fit(X_train, y_train)
     
-    # Evaluate
-    train_acc = clf.score(X_train, y_train)
-    test_acc = clf.score(X_test, y_test)
+    # Detailed reporting
+    train_acc, train_f1 = report("train", X_train, y_train, clf, le)
+    test_acc, test_f1 = report("test", X_test, y_test, clf, le)
     
     return {
         'name': name,
         'train_acc': train_acc,
         'test_acc': test_acc,
-        'features': X_train.shape[1]
+        'train_f1': train_f1,
+        'test_f1': test_f1,
+        'features': X_train.shape[1],
+        'model': clf
     }
 
 def main():
@@ -111,7 +126,7 @@ def main():
     # Load data
     train_path = BASE_DIR / "train"
     if not train_path.exists():
-        print(f"❌ Error: {train_path} not found!")
+        print(f"Error: {train_path} not found!")
         return
     
     images, labels = load_images(train_path, max_per_class=200)
@@ -134,15 +149,18 @@ def main():
     
     results = []
     for name, func in methods.items():
-        result = test_method(name, func, images_train, images_test, y_train, y_test)
+        result = test_method(name, func, images_train, images_test, y_train, y_test, le)
         results.append(result)
     
-    # Show results
-    print(f"\n{'Method':<10} {'Test Acc':<12} {'Features':<10}")
-    print("-" * 35)
+    # Summary results
+    print(f"\n{'='*80}")
+    print("SUMMARY RESULTS")
+    print(f"{'='*80}")
+    print(f"{'Method':<10} {'Test Acc':<12} {'Test F1':<12} {'Features':<10}")
+    print("-" * 50)
     
     for result in sorted(results, key=lambda x: x['test_acc'], reverse=True):
-        print(f"{result['name']:<10} {result['test_acc']:.4f}      {result['features']:<10}")
+        print(f"{result['name']:<10} {result['test_acc']:.4f}      {result['test_f1']:.4f}      {result['features']:<10}")
     
 
 if __name__ == "__main__":
