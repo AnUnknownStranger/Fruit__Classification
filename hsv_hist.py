@@ -27,7 +27,7 @@ def convert(img,label):
 
 def cvhis():
     #Load the data
-    dataset = preprocess.load_dataset(False)
+    dataset = preprocess.load_dataset(False,1)
     #load and convert the data into HSV histogram
     X_train_img, y_t_l = dataset['train']
     X_val,y_val = dataset['valid']

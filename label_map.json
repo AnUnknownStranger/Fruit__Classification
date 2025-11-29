@@ -1,0 +1,40 @@
+{
+  "label2idx": {
+    "Apple": 0,
+    "Banana": 1,
+    "Carambola": 2,
+    "Grape": 3,
+    "Guava": 4,
+    "Kiwi": 5,
+    "Mango": 6,
+    "Orange": 7,
+    "Peach": 8,
+    "Pear": 9,
+    "Persimmon": 10,
+    "Pitaya": 11,
+    "Plum": 12,
+    "Pomegranate": 13,
+    "Strawberry": 14,
+    "Tomatoes": 15,
+    "muskmelon": 16
+  },
+  "idx2label": {
+    "0": "Apple",
+    "1": "Banana",
+    "2": "Carambola",
+    "3": "Grape",
+    "4": "Guava",
+    "5": "Kiwi",
+    "6": "Mango",
+    "7": "Orange",
+    "8": "Peach",
+    "9": "Pear",
+    "10": "Persimmon",
+    "11": "Pitaya",
+    "12": "Plum",
+    "13": "Pomegranate",
+    "14": "Strawberry",
+    "15": "Tomatoes",
+    "16": "muskmelon"
+  }
+}

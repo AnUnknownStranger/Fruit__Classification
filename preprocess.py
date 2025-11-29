@@ -28,7 +28,7 @@ def load_images_from_folder(folder_path,normalized):
     return np.array(images), np.array(labels)
 
 
-def load_dataset(normalized):
+def load_dataset(normalized,samplePercentage):
     datasets = {}
     for split in ["train", "valid", "test"]:
         split_path = BASE_DIR / split
@@ -38,6 +38,12 @@ def load_dataset(normalized):
         
         print(f"Loading {split} dataset...")
         X, y = load_images_from_folder(split_path,normalized)
+        if split == "train":
+            total = X.shape[0]
+            sample_size = max(1, int(total * samplePercentage))
+            idx = np.random.choice(total, sample_size, replace=False)
+            X = X[idx]
+            y = y[idx]
         print(f"{split}: Loaded {X.shape[0]} images.")
         datasets[split] = (X, y)
 
