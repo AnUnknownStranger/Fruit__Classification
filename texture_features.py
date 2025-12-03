@@ -1,7 +1,8 @@
 """
-Edge Detection Features for Fruit Classification
+Texture Features for Fruit Classification
 ==========================================================
-- Edge detection features for fruit classification using canny and hog features.
+Texture feature extraction for fruit classification using:
+- Gray-Level Co-occurrence Matrix (GLCM) - Haralick features
 """
 
 import os
@@ -13,6 +14,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score, f1_score, classification_report
+from skimage.feature import graycomatrix, graycoprops
 
 BASE_DIR = Path("Fruits Classification")
 
@@ -42,45 +44,41 @@ def load_images(folder_path, max_per_class=200):
     
     return images, labels
 
-def extract_canny_features(image):
-    """Canny edge detection features"""
+def extract_glcm_features(image):
+    """
+    Gray-Level Co-occurrence Matrix (GLCM) - Haralick features
+    Captures texture properties like contrast, correlation, energy, homogeneity
+    """
     gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-    edges = cv2.Canny(gray, 50, 150)
     
-    # Just the essential features
-    edge_density = np.sum(edges > 0) / edges.size
+    # Quantize to reduce computation (0-255 -> 0-15)
+    gray_quantized = (gray // 16).astype(np.uint8)
     
-    # Gradient info
-    sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
-    sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
-    magnitude = np.sqrt(sobelx**2 + sobely**2)
+    # Calculate GLCM for different distances and angles
+    distances = [1, 2]
+    angles = [0, np.pi/4, np.pi/2, 3*np.pi/4]
     
-    features = [
-        edge_density,
-        magnitude.mean() / 255.0,
-        magnitude.std() / 255.0,
-        np.abs(sobelx).mean() / 255.0,
-        np.abs(sobely).mean() / 255.0,
-    ]
+    features = []
+    
+    for distance in distances:
+        for angle in angles:
+            glcm = graycomatrix(gray_quantized, 
+                               distances=[distance], 
+                               angles=[angle],
+                               levels=16,
+                               symmetric=True,
+                               normed=True)
+            
+            # Extract Haralick features
+            contrast = graycoprops(glcm, 'contrast')[0, 0]
+            dissimilarity = graycoprops(glcm, 'dissimilarity')[0, 0]
+            homogeneity = graycoprops(glcm, 'homogeneity')[0, 0]
+            energy = graycoprops(glcm, 'energy')[0, 0]
+            correlation = graycoprops(glcm, 'correlation')[0, 0]
+            
+            features.extend([contrast, dissimilarity, homogeneity, energy, correlation])
     
     return np.array(features)
-
-def extract_hog_features(image):
-    """HOG features for fruit classification"""
-    from skimage.feature import hog
-    
-    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-    
-    features = hog(
-        gray,
-        orientations=9,
-        pixels_per_cell=(32, 32),  # Larger cells = fewer features
-        cells_per_block=(2, 2),
-        visualize=False,
-        feature_vector=True
-    )
-    
-    return features
 
 def report(name, X, y, model, le):
     """Detailed reporting function for each dataset split"""
@@ -102,6 +100,8 @@ def test_method(name, extract_func, images_train, images_test, y_train, y_test, 
     X_train = np.array([extract_func(img) for img in images_train])
     X_test = np.array([extract_func(img) for img in images_test])
     
+    print(f"Feature dimension: {X_train.shape[1]}")
+    
     # Train model with regularization to prevent overfitting
     clf = RandomForestClassifier(
         n_estimators=100, 
@@ -115,7 +115,7 @@ def test_method(name, extract_func, images_train, images_test, y_train, y_test, 
     # Detailed reporting
     train_acc, train_f1 = report("train", X_train, y_train, clf, le)
     test_acc, test_f1 = report("test", X_test, y_test, clf, le)
-    
+       
     return {
         'name': name,
         'train_acc': train_acc,
@@ -127,7 +127,7 @@ def test_method(name, extract_func, images_train, images_test, y_train, y_test, 
     }
 
 def main():
-
+    """Main function to test texture feature methods"""
     
     # Load data
     train_path = BASE_DIR / "train"
@@ -147,27 +147,9 @@ def main():
     y_train = le.fit_transform(labels_train)
     y_test = le.transform(labels_test)
     
-
-    methods = {
-        'Canny': extract_canny_features,
-        'HOG': extract_hog_features,
-    }
+    # Test GLCM method
+    result = test_method('GLCM', extract_glcm_features, images_train, images_test, y_train, y_test, le)
     
-    results = []
-    for name, func in methods.items():
-        result = test_method(name, func, images_train, images_test, y_train, y_test, le)
-        results.append(result)
-    
-    # Summary results
-    print(f"\n{'='*80}")
-    print("SUMMARY RESULTS")
-    print(f"{'='*80}")
-    print(f"{'Method':<10} {'Test Acc':<12} {'Test F1':<12} {'Features':<10}")
-    print("-" * 50)
-    
-    for result in sorted(results, key=lambda x: x['test_acc'], reverse=True):
-        print(f"{result['name']:<10} {result['test_acc']:.4f}      {result['test_f1']:.4f}      {result['features']:<10}")
-    
-
+   
 if __name__ == "__main__":
     main()
