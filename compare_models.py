@@ -49,7 +49,7 @@ def extract_combined_features(image):
     
     return combined_hsv_hog, combined_hsv_canny 
 
-# ============================================================================
+# =====================================================================X=======
 # Model Training and Evaluation
 # ============================================================================
 def train_and_evaluate_model(X_train, y_train, X_test, y_test):
