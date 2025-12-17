@@ -1,4 +1,4 @@
-## Fruit Classification (Group 23)
+## Fruit Classification
 
 Computer Vision project exploring **handcrafted features** (HSV histogram, edges/HOG, texture/GLCM) and a **CNN baseline (ResNet-18)** for fruit image classification.
 
@@ -22,9 +22,9 @@ Computer Vision project exploring **handcrafted features** (HSV histogram, edges
   - `test/<class_name>/*`
 - `preprocess.py`: dataset loader used by `hsv_hist.py` and `CNN.py`
 - `hsv_hist.py`: HSV histogram + SVM (GridSearchCV)
-- `edge_detection.py`: edge-based features (Canny stats) + HOG features + Random Forest
-- `texture_features.py`: GLCM/Haralick texture features + Random Forest
-- `compare_models.py`: combined features (**HSV+HOG** vs **HSV+Canny**) + Random Forest
+- `edge_detection.py`: edge-based features (Canny stats) + HOG features
+- `texture_features.py`: GLCM texture features 
+- `compare_models.py`: combined features (**HSV+HOG** vs **HSV+Canny**) 
 - `CNN.py`: ResNet-18 training using PyTorch
 
 ## Setup
@@ -74,4 +74,3 @@ python CNN.py
 ## Notes
 
 - Classical feature scripts (`hsv_hist.py`, `edge_detection.py`, `texture_features.py`, `compare_models.py`) use a **single stratified train/test split** for evaluation unless otherwise specified in the script.
-- `Fruits Classification/data_splitting.py` is included as a helper script to create `train/valid/test` folders (use with care, as it moves files).
