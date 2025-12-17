@@ -41,7 +41,7 @@ If your dataset is in a different location, update `BASE_DIR` in the scripts tha
 
 From the project root:
 
-- **HSV Color Histogram **:
+- **HSV Color Histogram**:
 
 ```bash
 python hsv_hist.py
