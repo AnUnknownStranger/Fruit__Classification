@@ -100,7 +100,6 @@ def test_method(name, extract_func, images_train, images_test, y_train, y_test, 
     X_train = np.array([extract_func(img) for img in images_train])
     X_test = np.array([extract_func(img) for img in images_test])
     
-    print(f"Feature dimension: {X_train.shape[1]}")
     
     # Train model with regularization to prevent overfitting
     clf = RandomForestClassifier(

@@ -43,11 +43,11 @@ def extract_combined_features(image):
     # Extract HOG features using function from edge_detection.py
     hog_feat = extract_hog_features(image)
     
-    # Concatenate all features
+    # Concatenate features (compare HSV+Canny vs HSV+HOG; do NOT combine Canny+HOG)
     combined_hsv_hog = np.concatenate([hsv_feat, hog_feat])
-    combined_canny_hog = np.concatenate([canny_feat, hog_feat])
+    combined_hsv_canny = np.concatenate([hsv_feat, canny_feat])
     
-    return combined_hsv_hog, combined_canny_hog 
+    return combined_hsv_hog, combined_hsv_canny 
 
 # ============================================================================
 # Model Training and Evaluation
@@ -96,24 +96,24 @@ def main():
     # Extract features for training set
     train_features = [extract_combined_features(img) for img in images_train]
     X_train_hsv_hog = np.array([feat[0] for feat in train_features])
-    X_train_canny_hog = np.array([feat[1] for feat in train_features])
+    X_train_hsv_canny = np.array([feat[1] for feat in train_features])
     
     # Extract features for test set
     test_features = [extract_combined_features(img) for img in images_test]
     X_test_hsv_hog = np.array([feat[0] for feat in test_features])
-    X_test_canny_hog = np.array([feat[1] for feat in test_features]) 
+    X_test_hsv_canny = np.array([feat[1] for feat in test_features]) 
     
     print(f"Feature dimension (HSV + HOG): {X_train_hsv_hog.shape[1]}")
-    print(f"Feature dimension (Canny + HOG): {X_train_canny_hog.shape[1]}")
+    print(f"Feature dimension (HSV + Canny): {X_train_hsv_canny.shape[1]}")
     
     # Train and evaluate models
     acc_hsv_hog, f1_hsv_hog = train_and_evaluate_model(X_train_hsv_hog, y_train, X_test_hsv_hog, y_test)
-    acc_canny_hog, f1_canny_hog = train_and_evaluate_model(X_train_canny_hog, y_train, X_test_canny_hog, y_test)
+    acc_hsv_canny, f1_hsv_canny = train_and_evaluate_model(X_train_hsv_canny, y_train, X_test_hsv_canny, y_test)
     print(f"\nResults:")
     print(f"Accuracy (HSV + HOG): {acc_hsv_hog:.4f}")
     print(f"F1 Score (HSV + HOG): {f1_hsv_hog:.4f}")
-    print(f"Accuracy (Canny + HOG): {acc_canny_hog:.4f}")
-    print(f"F1 Score (Canny + HOG): {f1_canny_hog:.4f}")
+    print(f"Accuracy (HSV + Canny): {acc_hsv_canny:.4f}")
+    print(f"F1 Score (HSV + Canny): {f1_hsv_canny:.4f}")
     
 if __name__ == "__main__":
 
