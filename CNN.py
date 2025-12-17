@@ -7,20 +7,15 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import models
 from preprocess import load_dataset
 
-BATCH_SIZE = 32
-EPOCHS = 10
-LR = 3e-4
 MODEL_PATH = "model.pth"
-LABEL_MAP = "label_map.json"
-USE_IMAGENET_NORM = True
+
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class NumpyDataset(Dataset):
-    def __init__(self, X: np.ndarray, y: np.ndarray, label2idx: dict, imagenet_norm=True):
+    def __init__(self, X: np.ndarray, y: np.ndarray, label2idx: dict):
         self.X = X.astype(np.float32)
         self.y = np.array([label2idx[c] for c in y])
-        self.imagenet_norm = imagenet_norm
         self.mean = np.array([0.485, 0.456, 0.406], dtype=np.float32).reshape(1,1,3)
         self.std  = np.array([0.229, 0.224, 0.225], dtype=np.float32).reshape(1,1,3)
 
@@ -30,15 +25,12 @@ class NumpyDataset(Dataset):
     #Load the image as torch tensor and normalize the image
     def __getitem__(self, idx):
         img = self.X[idx]
-        if img.max() > 1.0:
-            img = img / 255.0
-        if self.imagenet_norm:
-            img = (img - self.mean) / self.std
+        img = (img - self.mean) / self.std
         img_t = torch.from_numpy(img).permute(2,0,1)
         label = int(self.y[idx])
         return img_t, label
 
-def build_model(num_classes, freeze_backbone=True):
+def build_model(num_classes):
     #Load the restnet18 model
     model = models.resnet18(pretrained=True)
     #Convert the final layer to linear layer
@@ -47,7 +39,7 @@ def build_model(num_classes, freeze_backbone=True):
 
 def train(normalized=True):
     #Load the dataset
-    datasets = load_dataset(normalized,1)
+    datasets = load_dataset(normalized,0.1)
 
     X_train, y_train = datasets["train"]
     X_valid, y_valid = datasets["valid"]
@@ -57,27 +49,23 @@ def train(normalized=True):
     classes = sorted(set(y_train.tolist()))
     #Convert each label to numerate id 
     label2idx = {c:i for i,c in enumerate(classes)}
-    #create reverse mapping
-    idx2label = {i:c for c,i in label2idx.items()}
-    with open(LABEL_MAP, "w") as f:
-        json.dump({"label2idx": label2idx, "idx2label": idx2label}, f, indent=2)
     
     #Convert dataset to numpy dataset
-    ds_train = NumpyDataset(X_train, y_train, label2idx, imagenet_norm=(USE_IMAGENET_NORM and normalized))
-    ds_val   = NumpyDataset(X_valid, y_valid, label2idx, imagenet_norm=(USE_IMAGENET_NORM and normalized))
-    ds_test  = NumpyDataset(X_test,  y_test,  label2idx, imagenet_norm=(USE_IMAGENET_NORM and normalized))
+    ds_train = NumpyDataset(X_train, y_train, label2idx)
+    ds_val   = NumpyDataset(X_valid, y_valid, label2idx)
+    ds_test  = NumpyDataset(X_test,  y_test,  label2idx)
 
     #Load the data with bacthsize
-    loader_train = DataLoader(ds_train, batch_size=BATCH_SIZE, shuffle=True)
-    loader_val   = DataLoader(ds_val,   batch_size=BATCH_SIZE, shuffle=False)
-    loader_test  = DataLoader(ds_test,  batch_size=BATCH_SIZE, shuffle=False)
+    loader_train = DataLoader(ds_train, batch_size=32, shuffle=True)
+    loader_val   = DataLoader(ds_val,   batch_size=32, shuffle=False)
+    loader_test  = DataLoader(ds_test,  batch_size=32, shuffle=False)
     #load the model
-    model = build_model(num_classes=len(classes), freeze_backbone=True)
-    optimizer = torch.optim.Adam([p for p in model.parameters() if p.requires_grad], lr=LR)
+    model = build_model(num_classes=len(classes))
+    optimizer = torch.optim.Adam([p for p in model.parameters() if p.requires_grad], lr=3e-4)
     criterion = nn.CrossEntropyLoss()
     #Perform training while keeping the best accuracy model
     best_val_acc = 0.0
-    for epoch in range(1, EPOCHS+1):
+    for epoch in range(0, 10):
         t0 = time.time()
         model.train()
         total_loss = 0.0
@@ -110,7 +98,7 @@ def train(normalized=True):
                 seen += xb.size(0)
         val_acc = correct / seen
 
-        print(f"Epoch {epoch}/{EPOCHS}  train_loss={train_loss:.4f}  train_acc={train_acc:.4f}  val_acc={val_acc:.4f}  time={(time.time()-t0):.1f}s")
+        print(f"Epoch {epoch+1}/{10}  train_loss={train_loss:.4f}  train_acc={train_acc:.4f}  val_acc={val_acc:.4f}  time={(time.time()-t0):.1f}s")
 
         if val_acc > best_val_acc:
             best_val_acc = val_acc
@@ -135,8 +123,8 @@ def train(normalized=True):
             seen += xb.size(0)
     test_acc = correct / seen
     print(f"Test accuracy: {test_acc:.4f}  (classes: {classes})")
-    return model, np.array(all_preds), np.array(all_targets)
+    return model
 
 
 if __name__ == "__main__":
-    model, preds, targets = train(normalized=True)
+    model = train(normalized=True)

@@ -14,7 +14,6 @@ def load_images_from_folder(folder_path,normalized):
         class_dir = folder_path / class_name
         if not class_dir.is_dir():
             continue
-
         for img_file in class_dir.glob("*.*"):
             try:
                 img = Image.open(img_file).convert("RGB")  
@@ -28,7 +27,7 @@ def load_images_from_folder(folder_path,normalized):
     return np.array(images), np.array(labels)
 
 
-def load_dataset(normalized,samplePercentage):
+def load_dataset(normalized,samplePercentage=1):
     datasets = {}
     for split in ["train", "valid", "test"]:
         split_path = BASE_DIR / split

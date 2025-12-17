@@ -46,7 +46,7 @@ def cvhis():
         ("svm", SVC(kernel='rbf', probability=True, class_weight="balanced")),
     ])
     grid = {
-        "svm__C":    [1, 3, 10, 30, 100],
+        "svm__C":[1, 3, 10, 30, 100],
         "svm__gamma":[ "scale", "auto", 1e-3, 3e-3, 1e-2, 3e-2, 1e-1 ],
     }
     best_mod = GridSearchCV(model,grid, cv=5, n_jobs=-1, verbose=1)
