@@ -59,7 +59,7 @@ python edge_detection.py
 python texture_features.py
 ```
 
-- **Combined Features (HSV+HOG vs HSV+Canny)**:
+- **Combined Features**:
 
 ```bash
 python compare_models.py
