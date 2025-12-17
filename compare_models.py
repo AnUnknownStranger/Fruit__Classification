@@ -31,7 +31,7 @@ def extract_combined_features(image):
     - Canny features from edge_detection.py
     - HOG features from edge_detection.py
     """
-    # Convert RGB to HSV for histogram (hsv_hist.py expects HSV)
+    # Convert RGB to HSV for histogram
     hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
     
     # Extract HSV histogram using function from hsv_hist.py
